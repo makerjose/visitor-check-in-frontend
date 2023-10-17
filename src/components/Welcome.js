@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Modal, TextField, FormControl, InputLabel, Input, InputAdornment, IconButton, FormHelperText } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { Grid, Paper, Typography } from "@mui/material"; 
 
 const Welcome = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,9 +63,16 @@ const Welcome = () => {
   };
 
   return (
-    <div>
+
+
+
+  <Grid container spacing={2}  style={{padding: "1em"}}>
+  {/* First Column */}
+  <Grid item xs={6}>
+    <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
+    <div >
       <Button variant="contained" onClick={handleOpen}>
-        Open Modal
+        New Visitor
       </Button>
       <Modal 
           open={isOpen}
@@ -76,9 +84,21 @@ const Welcome = () => {
           }}
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ backgroundColor: "rgba(255, 255, 255, 255)", padding: "16px", width: 300 }}>
+          <div style={{ backgroundColor: "rgba(255, 255, 255, 255)", padding: "16px", width: 300, borderRadius: "10px" }}>
             <FormControl fullWidth error={!!errors.name}>
-              <InputLabel htmlFor="name">Name</InputLabel>
+              <InputLabel htmlFor="name">First Name</InputLabel>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              {errors.name && (
+                <FormHelperText>{errors.name}</FormHelperText>
+              )}
+            </FormControl>
+            <FormControl fullWidth error={!!errors.name}>
+              <InputLabel htmlFor="name">Last Name</InputLabel>
               <Input
                 id="name"
                 name="name"
@@ -113,18 +133,6 @@ const Welcome = () => {
                 <FormHelperText>{errors.phoneNumber}</FormHelperText>
               )}
             </FormControl>
-            <FormControl fullWidth error={!!errors.checkInTime}>
-              <InputLabel htmlFor="checkInTime">Check-in Time</InputLabel>
-              <Input
-                id="checkInTime"
-                name="checkInTime"
-                value={formData.checkInTime}
-                onChange={handleChange}
-              />
-              {errors.checkInTime && (
-                <FormHelperText>{errors.checkInTime}</FormHelperText>
-              )}
-            </FormControl>
             <Button type="submit" variant="contained" color="primary">
               Submit
             </Button>
@@ -140,6 +148,16 @@ const Welcome = () => {
         </form>
       </Modal>
     </div>
+    </Paper>
+  </Grid>
+  
+  {/* second column */}
+  <Grid item xs={6}>
+    <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
+    <Typography variant="h5">Checked-in Visitors</Typography>
+    </Paper>
+  </Grid>
+  </Grid>
   );
 };
 

@@ -19,7 +19,7 @@ function App() {
       <header>
         <Header />
       </header>
-      <main>
+      <main style={{margin: "auto", height: "100vh", backgroundColor: "#dee7ec"}}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

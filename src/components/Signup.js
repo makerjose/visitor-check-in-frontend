@@ -33,15 +33,18 @@ const Signup = () => {
   };
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}  style={{paddingTop: "50px"}}>
         <Box
           marginLeft="auto"
           marginRight="auto"
-          width={300}
+          width={400}
           display="flex"
           flexDirection={"column"}
           justifyContent="center"
           alignItems="center"
+          borderRadius="10px"
+          backgroundColor= "#ffffff"
+          padding= "30px"
         >
           <Typography variant="h2">Signup</Typography>
 

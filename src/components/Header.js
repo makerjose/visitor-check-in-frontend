@@ -31,6 +31,9 @@ const Header = () => {
     <div>
       <AppBar position="sticky">
         <Toolbar>
+          <img src="USIU_Africa_Logo.png" alt="logo"
+            style={{width: "100px", height: "80px", margin: "10px"}}
+          />
           <Typography variant="h3">Visitor Check-In</Typography>
           <Box sx={{ marginLeft: "auto" }}>
           <Tabs
@@ -45,7 +48,7 @@ const Header = () => {
                     <Tab to="/signup" LinkComponent={Link} label="Signup" />
                 </>
                 ) : (
-                    <Tab onClick={handleLogout} to="/" LinkComponent={Link} label="Logout" />
+                    <Tab onClick={handleLogout} to="/login" LinkComponent={Link} label="Logout" />
                 )}
             </Tabs>
 

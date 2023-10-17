@@ -46,16 +46,20 @@ const Login = () => {
 
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
+    <div style={{}}>
+      <form onSubmit={handleSubmit}  style={{paddingTop: "50px"}}>
         <Box
           marginLeft="auto"
           marginRight="auto"
-          width={300}
+          // marginTop="50px"
+          width={400}
           display="flex"
           flexDirection={"column"}
           justifyContent="center"
           alignItems="center"
+          borderRadius="10px"
+          backgroundColor= "#ffffff"
+          padding= "30px"
         >
           <Typography variant="h2">Login</Typography>
 
