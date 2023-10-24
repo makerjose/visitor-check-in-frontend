@@ -1,20 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Modal, TextField, FormControl, InputLabel, Input, InputAdornment, IconButton, FormHelperText } from "@mui/material";
+import {
+  Button,
+  Modal,
+  FormControl,
+  InputLabel,
+  Input,
+  IconButton,
+  FormHelperText,
+  Grid,
+  Paper,
+  Typography,
+  Select,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { Grid, Paper, Typography, Select, MenuItem, Alert } from "@mui/material";
+// import { Grid, Paper, Typography, Select, MenuItem } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid'; 
 
 const Welcome = () => {
+  const [visitors, setVisitors] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    idNo: "",
     email: "",
     phoneNumber: "",
     department: "",
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // Fetch data from API endpoint 
+    axios.get("http://localhost:5000/api/visitor/fetch")
+      .then((response) => {
+        setVisitors(response.data); // Assuming the API response is an array of visitor objects
+      })
+      .catch((error) => {
+        console.error("Failed to fetch recently checked-in visitors: ", error);
+      });
+  }, []); 
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -25,6 +57,7 @@ const Welcome = () => {
     setFormData({
       firstName: "",
       lastName: "",
+      idNo: "",
       email: "",
       phoneNumber: "",
       department: "",
@@ -45,15 +78,23 @@ const Welcome = () => {
   
     // Form validation
     const newErrors = {};
+  
     if (!formData.firstName) {
       newErrors.firstName = "First Name is required";
     }
     if (!formData.lastName) {
       newErrors.lastName = "Last Name is required";
     }
+    if (!formData.idNo) {
+      newErrors.idNo = "ID/Passport No is required";
+    }
     if (!formData.email) {
       newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      // Check if the email matches a basic email format
+      newErrors.email = "Invalid email format";
     }
+  
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
     }
@@ -65,27 +106,56 @@ const Welcome = () => {
       setErrors(newErrors);
     } else {
       try {
-        // Generate a unique token on the client side
+        // Generate a unique token
         const unitToken = uuidv4();
   
         // Add the unitToken to the formData
         const formDataWithToken = { ...formData, unitToken };
   
         // Make an API POST request to save the data
-        const res = await axios.post("http://localhost:5000/api/create", formDataWithToken);
+        const res = await axios.post("http://localhost:5000/api/visitor/create", formDataWithToken);
         console.log("Form data submitted successfully:", res.data);
         handleClose();
       } catch (error) {
         console.error("Error submitting form data:", error);
-        // Handle the error as needed
       }
     }
   };
   
+  
 
   return (
     <Grid container spacing={2} style={{ padding: "1em" }}>
-      <Grid item xs={6}>
+
+      <Grid item xs={8}>
+        <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
+          <Typography variant="h5">Recently Checked-in Visitors</Typography>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>First Name</TableCell>
+                  <TableCell>Last Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Checked In</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visitors.map((visitor) => (
+                  <TableRow key={visitor._id}>
+                    <TableCell>{visitor.firstName}</TableCell>
+                    <TableCell>{visitor.lastName}</TableCell>
+                    <TableCell>{visitor.email}</TableCell>
+                    <TableCell>{visitor.checkInTime}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      </Grid>
+
+      <Grid item xs={4}>
         <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
           <div>
             <Button variant="contained" onClick={handleOpen}>
@@ -103,7 +173,7 @@ const Welcome = () => {
               <form onSubmit={handleSubmit}>
                 <div style={{ backgroundColor: "rgba(255, 255, 255, 255)", padding: "16px", width: 400, borderRadius: "10px" }}>
                   <FormControl fullWidth error={!!errors.firstName} style={{ margin: "10px" }}>
-                    <InputLabel htmlFor="name">First Name</InputLabel>
+                    <InputLabel htmlFor="firstName">First Name</InputLabel>
                     <Input
                       id="firstName"
                       name="firstName"
@@ -115,7 +185,7 @@ const Welcome = () => {
                     )}
                   </FormControl>
                   <FormControl fullWidth error={!!errors.lastName} style={{ margin: "10px" }}>
-                    <InputLabel htmlFor="name">Last Name</InputLabel>
+                    <InputLabel htmlFor="lastName">Last Name</InputLabel>
                     <Input
                       id="lastName"
                       name="lastName"
@@ -124,6 +194,18 @@ const Welcome = () => {
                     />
                     {errors.lastName && (
                       <FormHelperText>{errors.lastName}</FormHelperText>
+                    )}
+                  </FormControl>
+                  <FormControl fullWidth error={!!errors.idNo} style={{ margin: "10px" }}>
+                    <InputLabel htmlFor="idNo">ID/Passport No</InputLabel>
+                    <Input
+                      id="idNo"
+                      name="idNo"
+                      value={formData.idNo}
+                      onChange={handleChange}
+                    />
+                    {errors.idNo && (
+                      <FormHelperText>{errors.idNo}</FormHelperText>
                     )}
                   </FormControl>
                   <FormControl fullWidth error={!!errors.email} style={{ margin: "10px" }}>
@@ -183,12 +265,6 @@ const Welcome = () => {
               </form>
             </Modal>
           </div>
-        </Paper>
-      </Grid>
-
-      <Grid item xs={6}>
-        <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
-          <Typography variant="h5">Recently Checked-in Visitors</Typography>
         </Paper>
       </Grid>
     </Grid>

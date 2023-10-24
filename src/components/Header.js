@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { AppBar, Box, Tab, Tabs, Toolbar, Typography } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { authActions } from "../store";
 axios.defaults.withCredentials = true;
+
 const Header = () => {
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.isLoggedIn);
@@ -12,7 +13,7 @@ const Header = () => {
 
   //Logout request
   const sendLogoutReq = async () => {
-    const res = await axios.post("http://localhost:5000/api/logout", null, {
+    const res = await axios.post("http://localhost:5000/api/user/logout", null, {
       withCredentials: true,
     });
     if (res.status === 200) {
@@ -37,7 +38,7 @@ const Header = () => {
           <Typography variant="h3">Visitor Check-In</Typography>
           <Box sx={{ marginLeft: "auto" }}>
           <Tabs
-                indicatorColor="secondary"
+                // indicatorColor="secondary"
                 onChange={(e, val) => setValue(val)}
                 value={value}
                 textColor="inherit"

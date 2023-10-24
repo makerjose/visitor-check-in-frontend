@@ -12,7 +12,7 @@ const RefreshToken = () => {
 
     // Example axios request
     axios
-      .get('http://localhost:5000/api/refresh')
+      .get('http://localhost:5000/api/user/refresh')
       .then((response) => {
         // Assuming the server returns a new access token
         const newAccessToken = response.data.accessToken;
