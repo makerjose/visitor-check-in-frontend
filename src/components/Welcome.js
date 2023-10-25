@@ -7,6 +7,7 @@ import {
   InputLabel,
   Input,
   IconButton,
+  Fade,
   FormHelperText,
   Grid,
   Paper,
@@ -21,10 +22,13 @@ import {
   TableRow,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-// import { Grid, Paper, Typography, Select, MenuItem } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid'; 
 
 const Welcome = () => {
+  //manage state of the modal that views visitor info.
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedVisitor, setSelectedVisitor] = useState(null);
+
   const [visitors, setVisitors] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,8 +50,20 @@ const Welcome = () => {
       .catch((error) => {
         console.error("Failed to fetch recently checked-in visitors: ", error);
       });
-  }, []); 
+  }, [visitors]); 
 
+  // modal for viewing visitor
+  const openModal = (visitor) => {
+    setSelectedVisitor(visitor);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedVisitor(null);
+  };  
+
+  // modal for creating visitor
   const handleOpen = () => {
     setIsOpen(true);
   };
@@ -132,12 +148,14 @@ const Welcome = () => {
           <Typography variant="h5">Recently Checked-in Visitors</Typography>
           <TableContainer>
             <Table>
-              <TableHead>
-                <TableRow>
+              <TableHead >
+                <TableRow style={{ fontWeight: "bold" }}>
                   <TableCell>First Name</TableCell>
                   <TableCell>Last Name</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Checked In</TableCell>
+                  <TableCell>Served?</TableCell>
+                  <TableCell>More Details</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -147,6 +165,12 @@ const Welcome = () => {
                     <TableCell>{visitor.lastName}</TableCell>
                     <TableCell>{visitor.email}</TableCell>
                     <TableCell>{visitor.checkInTime}</TableCell>
+                    <TableCell>{visitor.served ? <p style={{color: "green"}}>YES</p> : <p style={{color: "red"}}>NO</p>}</TableCell>
+                    <TableCell>
+                      <Button variant="outlined" onClick={() => openModal(visitor)}>
+                        View
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -154,6 +178,31 @@ const Welcome = () => {
           </TableContainer>
         </Paper>
       </Grid>
+      
+       {/* the backdrop modal */}
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        closeAfterTransition
+      >
+        <Fade in={modalOpen}>
+          <Paper style={{padding: "15px", paddingLeft: "40%", backgroundColor: "#dee7ec"}}>
+            <h2>Visitor Details</h2>
+            {selectedVisitor && (
+              <div>
+                <p>First Name: {selectedVisitor.firstName}</p>
+                <p>Last Name: {selectedVisitor.lastName}</p>
+                <p>Phone No: {selectedVisitor.phoneNumber}</p>
+                <p>Email: {selectedVisitor.email}</p>
+                <p>Checked In: {selectedVisitor.checkInTime}</p>
+                <p>Checked Out: {selectedVisitor.checkOutTme}</p>
+                <p>Serve status: {selectedVisitor.served ? <p>YES</p> : <p>NO</p>}</p>
+              </div>
+            )}
+          </Paper>
+        </Fade>
+      </Modal>
+
 
       <Grid item xs={4}>
         <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
