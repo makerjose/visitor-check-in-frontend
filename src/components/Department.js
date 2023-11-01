@@ -22,18 +22,18 @@ const Dep = () => {
   const [filteredVisitors, setFilteredVisitors] = useState([]);
 
   useEffect(() => {
-    // Fetch data from API endpoint
+    // Fetch data from the API endpoint
     axios
-    .get("http://localhost:5000/api/visitor/fetch")
-    .then((response) => {
-      const sortedVisitors = response.data.sort((a, b) =>
-        b.checkInTime.localeCompare(a.checkInTime)
-      );
-      setVisitors(sortedVisitors);
-    })
-    .catch((error) => {
-      console.error("Failed to fetch recently checked-in visitors: ", error);
-    });
+      .get("http://localhost:5000/api/visitor/fetch")
+      .then((response) => {
+        const sortedVisitors = response.data.sort((a, b) =>
+          b.checkInTime.localeCompare(a.checkInTime)
+        );
+        setVisitors(sortedVisitors);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch recently checked-in visitors: ", error);
+      });
   }, []);
 
   useEffect(() => {
@@ -46,6 +46,37 @@ const Dep = () => {
   const handleTabChange = (selectedDepartment) => {
     setDepartment(selectedDepartment);
   };
+
+  // Function to mark a visitor as served
+// Function to mark a visitor as served
+const handleMarkServed = (visitorId) => {
+  axios
+    .put(`http://localhost:5000/api/visitor/update/${visitorId}`, {})
+    .then((response) => {
+      if (response.status === 200) {
+        console.log("Visitor marked as served successfully");
+
+        // After marking as served, update the visitors list to reflect the change
+        axios
+          .get("http://localhost:5000/api/visitor/fetch")
+          .then((response) => {
+            const sortedVisitors = response.data.sort((a, b) =>
+              b.checkInTime.localeCompare(a.checkInTime)
+            );
+            setVisitors(sortedVisitors);
+          })
+          .catch((error) => {
+            console.error("Failed to fetch recently checked-in visitors: ", error);
+          });
+      } else {
+        console.error("Failed to mark the visitor as served.");
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to mark the visitor as served: ", error);
+    });
+};
+
 
   return (
     <div>
@@ -91,13 +122,12 @@ const Dep = () => {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow>
+                    <TableRow style={{ fontWeight: "bold" }}>
                       <TableCell>First Name</TableCell>
                       <TableCell>Last Name</TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Checked In</TableCell>
                       <TableCell>Served?</TableCell>
-                      {/* Add more table headers as needed */}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -108,9 +138,17 @@ const Dep = () => {
                         <TableCell>{visitor.email}</TableCell>
                         <TableCell>{visitor.checkInTime}</TableCell>
                         <TableCell>
-                          {visitor.served ? "YES" : "NO"}
+                          {visitor.served ? (
+                            <p style={{ color: "green" }}>Served</p>
+                          ) : (
+                            <Button
+                              variant="outlined"
+                              onClick={() => handleMarkServed(visitor._id)}
+                            >
+                              Mark Served
+                            </Button>
+                          )}
                         </TableCell>
-                        {/* Add more table cells as needed */}
                       </TableRow>
                     ))}
                   </TableBody>
