@@ -22,10 +22,11 @@ import {
   TableRow,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from 'uuid';
+
+const PAGE_SIZE = 7; // Number of visitors to display per page
 
 const Welcome = () => {
-  //manage state of the modal that views visitor info.
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState(null);
 
@@ -40,19 +41,23 @@ const Welcome = () => {
     department: "",
   });
   const [errors, setErrors] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    // Fetch data from API endpoint 
-    axios.get("http://localhost:5000/api/visitor/fetch")
+    // Fetch data from API endpoint
+    axios
+      .get("http://localhost:5000/api/visitor/fetch")
       .then((response) => {
-        setVisitors(response.data); // Assuming the API response is an array of visitor objects
+        const sortedVisitors = response.data.sort((a, b) =>
+          b.checkInTime.localeCompare(a.checkInTime)
+        );
+        setVisitors(sortedVisitors);
       })
       .catch((error) => {
         console.error("Failed to fetch recently checked-in visitors: ", error);
       });
-  }, [visitors]); 
+  }, [currentPage]);
 
-  // modal for viewing visitor
   const openModal = (visitor) => {
     setSelectedVisitor(visitor);
     setModalOpen(true);
@@ -61,9 +66,8 @@ const Welcome = () => {
   const closeModal = () => {
     setModalOpen(false);
     setSelectedVisitor(null);
-  };  
+  };
 
-  // modal for creating visitor
   const handleOpen = () => {
     setIsOpen(true);
   };
@@ -91,10 +95,9 @@ const Welcome = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Form validation
+
     const newErrors = {};
-  
+
     if (!formData.firstName) {
       newErrors.firstName = "First Name is required";
     }
@@ -107,48 +110,54 @@ const Welcome = () => {
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      // Check if the email matches a basic email format
       newErrors.email = "Invalid email format";
     }
-  
+
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
     }
     if (!formData.department) {
       newErrors.department = "Department is required";
     }
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
       try {
-        // Generate a unique token
         const unitToken = uuidv4();
-  
-        // Add the unitToken to the formData
         const formDataWithToken = { ...formData, unitToken };
-  
-        // Make an API POST request to save the data
-        const res = await axios.post("http://localhost:5000/api/visitor/create", formDataWithToken);
+        const res = await axios.post(
+          "http://localhost:5000/api/visitor/create",
+          formDataWithToken
+        );
+
         console.log("Form data submitted successfully:", res.data);
         handleClose();
+        setCurrentPage(1); // Reset to the first page after submitting
+        
+        setVisitors([...visitors, res.data]);  // Trigger the effect to refresh the visitors data
+
       } catch (error) {
         console.error("Error submitting form data:", error);
       }
     }
   };
-  
-  
+
+  // Calculate the start and end indices for pagination
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+
+  // Paginate the visitors
+  const paginatedVisitors = visitors.slice(startIndex, endIndex);
 
   return (
     <Grid container spacing={2} style={{ padding: "1em" }}>
-
       <Grid item xs={8}>
         <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
           <Typography variant="h5">Recently Checked-in Visitors</Typography>
           <TableContainer>
             <Table>
-              <TableHead >
+              <TableHead>
                 <TableRow style={{ fontWeight: "bold" }}>
                   <TableCell>First Name</TableCell>
                   <TableCell>Last Name</TableCell>
@@ -159,13 +168,19 @@ const Welcome = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {visitors.map((visitor) => (
+                {paginatedVisitors.map((visitor) => (
                   <TableRow key={visitor._id}>
                     <TableCell>{visitor.firstName}</TableCell>
                     <TableCell>{visitor.lastName}</TableCell>
                     <TableCell>{visitor.email}</TableCell>
                     <TableCell>{visitor.checkInTime}</TableCell>
-                    <TableCell>{visitor.served ? <p style={{color: "green"}}>YES</p> : <p style={{color: "red"}}>NO</p>}</TableCell>
+                    <TableCell>
+                      {visitor.served ? (
+                        <p style={{ color: "green" }}>YES</p>
+                      ) : (
+                        <p style={{ color: "red" }}>NO</p>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Button variant="outlined" onClick={() => openModal(visitor)}>
                         View
@@ -176,6 +191,21 @@ const Welcome = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          {/* Pagination controls */}
+          <div style={{ marginTop: "1em", display: "flex", justifyContent: "center" }}>
+            <Button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              disabled={endIndex >= visitors.length}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </Paper>
       </Grid>
       
@@ -194,6 +224,7 @@ const Welcome = () => {
                 <p>Last Name: {selectedVisitor.lastName}</p>
                 <p>Phone No: {selectedVisitor.phoneNumber}</p>
                 <p>Email: {selectedVisitor.email}</p>
+                <p>Department: {selectedVisitor.department}</p>
                 <p>Checked In: {selectedVisitor.checkInTime}</p>
                 <p>Checked Out: {selectedVisitor.checkOutTme}</p>
                 <p>Serve status: {selectedVisitor.served ? <p>YES</p> : <p>NO</p>}</p>
