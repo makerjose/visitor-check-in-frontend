@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
+  Alert,
   Button,
   Modal,
   FormControl,
@@ -24,11 +25,15 @@ import {
 import { Close } from "@mui/icons-material";
 import { v4 as uuidv4 } from 'uuid';
 
-const PAGE_SIZE = 7; // Number of visitors to display per page
+const PAGE_SIZE = 7;  // number of visitors to display per page
 
 const Welcome = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [isDisplayingMessage, setIsDisplayingMessage] = useState(false);
 
   const [visitors, setVisitors] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +45,7 @@ const Welcome = () => {
     phoneNumber: "",
     department: "",
   });
+  
   const [errors, setErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -95,9 +101,9 @@ const Welcome = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const newErrors = {};
-
+  
     if (!formData.firstName) {
       newErrors.firstName = "First Name is required";
     }
@@ -112,14 +118,14 @@ const Welcome = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Invalid email format";
     }
-
+  
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
     }
     if (!formData.department) {
       newErrors.department = "Department is required";
     }
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
@@ -130,18 +136,35 @@ const Welcome = () => {
           "http://localhost:5000/api/visitor/create",
           formDataWithToken
         );
-
+  
         console.log("Form data submitted successfully:", res.data);
+        setSuccessMessage("Form data submitted successfully");
+        setErrorMessage(null); // Reset error message
+        setIsDisplayingMessage(true); // Display the message
+  
+        setTimeout(() => {
+          // Hide the message after 3 seconds
+          setIsDisplayingMessage(false);
+        }, 3000);
+  
         handleClose();
-        setCurrentPage(1); // Reset to the first page after submitting
-        
-        setVisitors([...visitors, res.data]);  // Trigger the effect to refresh the visitors data
-
+        setCurrentPage(1); // reset to the first page after submitting
+  
+        setVisitors([...visitors, res.data]); // Trigger the effect to refresh the visitors data
       } catch (error) {
+        setErrorMessage("Error submitting form data");
+        setSuccessMessage(null); // Reset success message
+        setIsDisplayingMessage(true); // Display the message
+  
+        setTimeout(() => {
+          // Hide the message after 3 seconds
+          setIsDisplayingMessage(false);
+        }, 3000);
+  
         console.error("Error submitting form data:", error);
       }
     }
-  };
+  };  
 
   // Calculate the start and end indices for pagination
   const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -154,6 +177,13 @@ const Welcome = () => {
     <Grid container spacing={2} style={{ padding: "1em" }}>
       <Grid item xs={8}>
         <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
+          <Alert variant="filled" severity="success" style={{ display: isDisplayingMessage && successMessage ? "block" : "none" }}>
+            {successMessage}
+          </Alert>
+          <Alert variant="filled" severity="error" style={{ display: isDisplayingMessage && errorMessage ? "block" : "none" }}>
+            {errorMessage}
+          </Alert>
+
           <Typography variant="h5">Recently Checked-in Visitors</Typography>
           <TableContainer>
             <Table>
@@ -226,8 +256,9 @@ const Welcome = () => {
                 <p>Email: {selectedVisitor.email}</p>
                 <p>Department: {selectedVisitor.department}</p>
                 <p>Checked In: {selectedVisitor.checkInTime}</p>
-                <p>Checked Out: {selectedVisitor.checkOutTme}</p>
-                <p>Serve status: {selectedVisitor.served ? <p>YES</p> : <p>NO</p>}</p>
+                <p>Checked Out: {selectedVisitor.checkOutTime}</p>
+                <p>Visitor Code: {selectedVisitor.unitToken}</p>
+                <p>Serve status: {selectedVisitor.served ? <p style={{ color: "green" }}>YES</p> : <p style={{ color: "red" }}>NO</p>}</p>
               </div>
             )}
           </Paper>

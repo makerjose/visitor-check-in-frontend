@@ -47,7 +47,6 @@ const Dep = () => {
     setDepartment(selectedDepartment);
   };
 
-  // Function to mark a visitor as served
 // Function to mark a visitor as served
 const handleMarkServed = (visitorId) => {
   axios
@@ -139,7 +138,7 @@ const handleMarkServed = (visitorId) => {
                         <TableCell>{visitor.checkInTime}</TableCell>
                         <TableCell>
                           {visitor.served ? (
-                            <p style={{ color: "green" }}>Served</p>
+                            <p><span style={{ color: "green" }}>Served </span> [ <span>{visitor.checkInTime} ]</span> </p>
                           ) : (
                             <Button
                               variant="outlined"
