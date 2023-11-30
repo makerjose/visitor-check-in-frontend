@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { format, isValid } from 'date-fns';
+import DeleteIcon from "@mui/icons-material/Delete";
+
 import {
   Alert,
   Button,
@@ -21,9 +24,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField, // Add TextField for search
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { v4 as uuidv4 } from 'uuid';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 const PAGE_SIZE = 7;  // number of visitors to display per page
 
@@ -45,14 +51,22 @@ const Welcome = () => {
     phoneNumber: "",
     department: "",
   });
-  
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [errors, setErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+
 
   useEffect(() => {
     // Fetch data from API endpoint
     axios
-      .get("http://localhost:5000/api/visitor/fetch")
+      .get("http://localhost:5000/api/visitor/fetch", {
+        params: {
+          searchTerm,
+        },
+      })
       .then((response) => {
         const sortedVisitors = response.data.sort((a, b) =>
           b.checkInTime.localeCompare(a.checkInTime)
@@ -62,8 +76,26 @@ const Welcome = () => {
       .catch((error) => {
         console.error("Failed to fetch recently checked-in visitors: ", error);
       });
-  }, [currentPage]);
-
+  }, [currentPage, searchTerm]);
+  
+  
+  
+  const searchData = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/visitor/fetch", {
+        params: { searchTerm },
+      });
+  
+      const sortedVisitors = response.data.sort((a, b) =>
+        b.checkInTime.localeCompare(a.checkInTime)
+      );
+      setVisitors(sortedVisitors);
+    } catch (error) {
+      console.error("Failed to fetch searched visitors:", error);
+    }
+  };  
+  
+  
   const openModal = (visitor) => {
     setSelectedVisitor(visitor);
     setModalOpen(true);
@@ -90,6 +122,25 @@ const Welcome = () => {
     });
     setErrors({});
   };
+
+  const handleDelete = async (visitorId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/visitor/delete/${visitorId}`);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Failed to delete visitor:", error);
+    }
+  };
+
+  
+  const formatDate = (date) => {
+    if (isValid(date)) {
+      return format(date, 'yyyy-MM-dd');
+    } else {
+      return ''; // Return an empty string or some other default value for invalid dates
+    }
+  };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -170,7 +221,7 @@ const Welcome = () => {
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
 
-  // Paginate the visitors
+  //paginate the visitors
   const paginatedVisitors = visitors.slice(startIndex, endIndex);
 
   return (
@@ -185,16 +236,36 @@ const Welcome = () => {
           </Alert>
 
           <Typography variant="h5">Recently Checked-in Visitors</Typography>
+
+
+          <TextField
+            label="Search by Name, Phone, Email, or Date"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => searchData(visitors, searchTerm)}
+          >
+            Search
+          </Button>
+
+
+
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow style={{ fontWeight: "bold" }}>
-                  <TableCell>First Name</TableCell>
-                  <TableCell>Last Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Checked In</TableCell>
-                  <TableCell>Served?</TableCell>
-                  <TableCell>More Details</TableCell>
+                <TableRow>
+                  <TableCell style={{ fontWeight: "bold" }}>First Name</TableCell>
+                  <TableCell style={{ fontWeight: "bold" }}>Last Name</TableCell>
+                  <TableCell style={{ fontWeight: "bold" }}>Email</TableCell>
+                  <TableCell style={{ fontWeight: "bold" }}>Checked In</TableCell>
+                  <TableCell style={{ fontWeight: "bold" }}>Served?</TableCell>
+                  <TableCell style={{ fontWeight: "bold" }}>More Details</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -216,6 +287,12 @@ const Welcome = () => {
                         View
                       </Button>
                     </TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleDelete(visitor._id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -258,7 +335,7 @@ const Welcome = () => {
                 <p>Checked In: {selectedVisitor.checkInTime}</p>
                 <p>Checked Out: {selectedVisitor.checkOutTime}</p>
                 <p>Visitor Code: {selectedVisitor.unitToken}</p>
-                <p>Serve status: {selectedVisitor.served ? <p style={{ color: "green" }}>YES</p> : <p style={{ color: "red" }}>NO</p>}</p>
+                <p>Serve status: {selectedVisitor.served ? <span style={{ color: "green" }}>YES</span> : <span style={{ color: "red" }}>NO</span>}</p>
               </div>
             )}
           </Paper>
@@ -269,9 +346,23 @@ const Welcome = () => {
       <Grid item xs={4}>
         <Paper style={{ padding: "16px", backgroundColor: "rgba(255, 255, 255, 1)" }}>
           <div>
-            <Button variant="contained" onClick={handleOpen}>
+            <Button variant="contained" onClick={handleOpen} style={{ marginBottom: "1em" }}>
               New Visitor
             </Button>
+
+            
+            {/* Calendar */}
+            <Calendar
+              onChange={(date) => {
+                setSelectedDate(date);
+                const formattedDate = formatDate(date); // Format the date here
+                setSearchTerm(formattedDate);
+                searchData(visitors, formattedDate); // Trigger searchData directly
+              }}
+              value={selectedDate}
+            />
+
+
             <Modal
               open={isOpen}
               onClose={handleClose}
