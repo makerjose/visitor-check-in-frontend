@@ -6,6 +6,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import {
   Alert,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Modal,
   FormControl,
   InputLabel,
@@ -57,6 +61,36 @@ const Welcome = () => {
 
   const [errors, setErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+
+  // state variable for delete
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = (visitor) => {
+    setSelectedVisitor(visitor);
+    setOpen(true);
+  };
+  
+
+  const handleCloseDelete = () => {
+    setOpen(false);
+  };  
+
+  const handleDeleteConfirmed = () => {
+    handleDelete(selectedVisitor._id);
+    handleCloseDelete();
+  };
+  
+  
+  const handleDelete = async (visitorId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/visitor/delete/${visitorId}`);
+      console.log("Record deleted successfully");
+      searchData(); // Fetch data again after successful deletion
+    } catch (error) {
+      console.error("Failed to delete visitor:", error.message); // Log the error message
+    }
+  };
+  
 
 
   useEffect(() => {
@@ -121,15 +155,6 @@ const Welcome = () => {
       department: "",
     });
     setErrors({});
-  };
-
-  const handleDelete = async (visitorId) => {
-    try {
-      await axios.delete(`http://localhost:5000/api/visitor/delete/${visitorId}`);
-      setCurrentPage(1);
-    } catch (error) {
-      console.error("Failed to delete visitor:", error);
-    }
   };
 
   
@@ -288,9 +313,9 @@ const Welcome = () => {
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <IconButton onClick={() => handleDelete(visitor._id)}>
-                        <DeleteIcon />
-                      </IconButton>
+                    <IconButton onClick={() => handleClickOpen(visitor)}>
+                      <DeleteIcon />
+                    </IconButton>
                     </TableCell>
 
                   </TableRow>
@@ -315,6 +340,20 @@ const Welcome = () => {
           </div>
         </Paper>
       </Grid>
+
+      {/* Delete dialog */}
+      <Dialog open={open} onClose={handleCloseDelete}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this visitor?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDelete}>Cancel</Button>
+          <Button onClick={handleDeleteConfirmed}>Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+
       
        {/* the backdrop modal */}
       <Modal
